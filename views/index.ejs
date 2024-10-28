@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <script>
+      async function deletePlayer(playerId) {
+        const response = await fetch(`/deleteplayer/${playerId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        const result = await response.json();
+        if (result.success) {
+          document.getElementById(`player-${playerId}`).remove();
+        } else {
+          alert('Failed to delete player');
+        }
+      }
+
+      async function updatePlayer(playerId, isSecondClick) {
+        const form = document.getElementById(`update-form-${playerId}`);
+        const firstNameInput = form.querySelector('input[name="first_name"]');
+
+        if (!isSecondClick) {
+          firstNameInput.focus();
+          form.dataset.isSecondClick = 'true';
+          return;
+        }
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        const response = await fetch(`/updateplayer/${playerId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          const playerCard = document.getElementById(`player-${playerId}`);
+          playerCard.querySelector('.card-title').innerText = `${data.first_name} ${data.last_name}`;
+          playerCard.querySelector('.card-text-dob').innerText = `DOB: ${data.date_of_birth}`;
+          playerCard.querySelector('.card-text-description').innerText = `Description: ${data.description}`;
+
+          // Show update message
+          const messageContainer = document.getElementById('update-message');
+          messageContainer.innerText = 'Player information updated successfully!';
+          messageContainer.style.display = 'block';
+
+          // Hide the message after 3 seconds
+          setTimeout(() => {
+            messageContainer.style.display = 'none';
+          }, 3000);
+
+          // Remove focus from the input field
+          document.activeElement.blur();
+          form.dataset.isSecondClick = 'false';
+        } else {
+          alert('Failed to update player');
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <%- include('partials/header') %>
+    <div class="container">
+      <h1 class="my-4"><%= title %></h1>
+
+      <!-- Add Player Widget -->
+      <h2>Add Player</h2>
+      <form action="/addplayer" method="POST" class="mb-4">
+        <div class="form-group">
+          <label>First name:</label>
+          <input type="text" name="first_name" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>Last name:</label>
+          <input type="text" name="last_name" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>Surname:</label>
+          <input type="text" name="surname" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Description:</label>
+          <textarea name="description" class="form-control" required></textarea>
+        </div>
+        <div class="form-group">
+          <label>Date of Birth:</label>
+          <input type="date" name="date_of_birth" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Player</button>
+      </form>
+
+      <!-- Update Message -->
+      <div id="update-message" class="alert alert-success" style="display: none;"></div>
+
+      <!-- List of Players -->
+      <h2>Players</h2>
+      <% getplayers.forEach(function(player) { %>
+        <div class="card mb-3" id="player-<%= player.player_id %>">
+          <div class="card-body">
+            <h5 class="card-title"><%= player.first_name %> <%= player.last_name %></h5>
+            <p class="card-text card-text-dob"><strong>DOB:</strong> <%= player.date_of_birth %></p>
+            <p class="card-text card-text-description"><strong>Description:</strong> <%= player.description %></p>
+            <!-- Update Player Form -->
+            <form id="update-form-<%= player.player_id %>" class="mb-2" data-is-second-click="false">
+              <div class="form-group">
+                <label>First name:</label>
+                <input type="text" name="first_name" value="<%= player.first_name %>" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label>Last name:</label>
+                <input type="text" name="last_name" value="<%= player.last_name %>" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label>Surname:</label>
+                <input type="text" name="surname" value="<%= player.surname %>" class="form-control">
+              </div>
+              <div class="form-group">
+                <label>Description:</label>
+                <textarea name="description" class="form-control" required><%= player.description %></textarea>
+              </div>
+              <div class="form-group">
+                <label>Date of Birth:</label>
+                <input type="date" name="date_of_birth" value="<%= player.date_of_birth %>" class="form-control" required>
+              </div>
+              <button type="button" class="btn btn-warning" onclick="updatePlayer(<%= player.player_id %>, this.form.dataset.isSecondClick === 'true')">Update Player</button>
+            </form>
+            <!-- Delete Player Button -->
+            <button class="btn btn-danger" onclick="deletePlayer(<%= player.player_id %>)">Delete Player</button>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+    <%- include('partials/footer') %>
+  </body>
+</html>
