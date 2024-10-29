@@ -38,4 +38,19 @@ app.post('/deleteplayer/:id', async (req, res) => {
     res.json({ success: true });
 });
 
+// New route to list Represents table data
+app.get('/represents', async (req, res) => {
+    const represents = await dbConnector.getRepresents();
+    const players = await dbConnector.getPlayers();
+    const teams = await dbConnector.getTeams();
+    res.render('represents', { title: 'Player Representations', represents, players, teams });
+});
+
+// Add Representation Route
+app.post('/addrepresentation', async (req, res) => {
+    const { player_id, team_id } = req.body;
+    await dbConnector.addRepresentation({ player_id, team_id });
+    res.redirect('/represents');
+});
+
 module.exports = app;

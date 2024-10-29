@@ -34,9 +34,41 @@ async function deletePlayer(player_id) {
     await db.run(sql, [player_id]);
 }
 
+async function getRepresents() {
+    const db = await connect();
+    const represents = await db.all(`
+        SELECT 
+            Represents.player_id, 
+            Represents.team_id, 
+            Player.first_name, 
+            Player.last_name, 
+            Team.name AS team_name 
+        FROM Represents
+        JOIN Player ON Represents.player_id = Player.player_id
+        JOIN Team ON Represents.team_id = Team.team_id
+    `);
+    return represents;
+}
+
+async function getTeams() {
+    const db = await connect();
+    const teams = await db.all('SELECT * from Team');
+    return teams;
+}
+
+async function addRepresentation(representation) {
+    const db = await connect();
+    const { player_id, team_id } = representation;
+    const sql = 'INSERT INTO Represents (player_id, team_id) VALUES (?, ?)';
+    await db.run(sql, [player_id, team_id]);
+}
+
 module.exports = {
     getPlayers,
     addPlayer,
     updatePlayer,
-    deletePlayer
+    deletePlayer,
+    getRepresents,
+    getTeams,
+    addRepresentation
 };
